@@ -31,9 +31,13 @@ class Config:
     discovery_git_repo_path = environ.get(
         "DISCOVERY_GIT_REPO_PATH", "/repos/discovery-server"
     )
+    verbose_subprocesses = environ.get("VERBOSE_SUBPROCESSES", "0")
 
 
 CONFIG = Config()
+
+STDOUT = subprocess.DEVNULL if CONFIG.verbose_subprocesses == "0" else subprocess.STDOUT
+STDERR = subprocess.DEVNULL if CONFIG.verbose_subprocesses == "0" else subprocess.STDERR
 
 
 def error(message):
@@ -45,7 +49,9 @@ def warning(message):
 
 
 def git_config_add(key, value):
-    subprocess.call(["git", "config", "--global", "--add", key, value])
+    subprocess.call(
+        ["git", "config", "--global", "--add", key, value], stdout=STDOUT, stderr=STDERR
+    )
 
 
 def prompt_input(description, default=None, required=False):
@@ -95,7 +101,8 @@ def is_git_repo(path):
         subprocess.call(
             ["git", "rev-parse", "--is-inside-work-tree"],
             cwd=path,
-            stdout=subprocess.DEVNULL,
+            stdout=STDOUT,
+            stderr=STDERR,
         )
         == 0
     )
@@ -114,11 +121,12 @@ def clone_repo(origin_url, local_path):
 def set_up_chaski():
     clone_repo(CONFIG.chaski_git_url, CONFIG.chaski_git_repo_path)
     with Progress() as progress:
+        progress.add_task("Waiting on `poetry install` for chaski", total=None)
         if (
             subprocess.call(
                 ["poetry", "install", "-C", CONFIG.chaski_git_repo_path],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
+                stdout=STDOUT,
+                stderr=STDERR,
             )
             != 0
         ):
