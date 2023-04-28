@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 from dataclasses import dataclass
-from getpass import getpass
 from os import environ, path
 from textwrap import dedent
 
@@ -101,11 +100,11 @@ def kinit():
         success = subprocess.call(["kinit", CONFIG.kerberos_username]) == 0
 
 
-def is_git_repo(path):
+def is_git_repo(local_path):
     return (
         subprocess.call(
             ["git", "rev-parse", "--is-inside-work-tree"],
-            cwd=path,
+            cwd=local_path,
             stdout=STDOUT,
             stderr=STDERR,
         )
