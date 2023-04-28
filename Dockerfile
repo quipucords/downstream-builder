@@ -12,7 +12,7 @@ RUN dnf install -y krb5-workstation git man vim which chkconfig java-headless \
 RUN curl -L -o /get-pip.py https://bootstrap.pypa.io/get-pip.py \
     && python3 /get-pip.py \
     && rm -f /get-pip.py \
-    && python3 -m pip install poetry rich
+    && python3 -m pip install poetry rich pyyaml
 
 COPY configs/krb5.conf /etc/krb5.conf
 COPY configs/gitconfig /root/.gitconfig

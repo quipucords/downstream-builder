@@ -6,10 +6,14 @@ from textwrap import dedent
 
 from rich.console import Console
 from rich.progress import Progress
-from rich.prompt import Prompt
+from rich.prompt import Confirm, Prompt
+from rich.table import Table
 
 import subprocess
 import sys
+import time
+
+import yaml
 
 console = Console()
 
@@ -32,12 +36,13 @@ class Config:
         "DISCOVERY_GIT_REPO_PATH", "/repos/discovery-server"
     )
     verbose_subprocesses = environ.get("VERBOSE_SUBPROCESSES", "0")
+    private_branch_name = f"private-{kerberos_username}-{time.time()}"
 
 
 CONFIG = Config()
 
-STDOUT = subprocess.DEVNULL if CONFIG.verbose_subprocesses == "0" else subprocess.STDOUT
-STDERR = subprocess.DEVNULL if CONFIG.verbose_subprocesses == "0" else subprocess.STDERR
+STDOUT = subprocess.DEVNULL if CONFIG.verbose_subprocesses == "0" else subprocess.PIPE
+STDERR = subprocess.DEVNULL if CONFIG.verbose_subprocesses == "0" else subprocess.STDOUT
 
 
 def error(message):
@@ -142,35 +147,172 @@ def set_up_discovery():
     )
 
 
-def instructions():
-    chaski_command = f"poetry run -C {CONFIG.chaski_git_repo_path} chaski"
-    message = f"""
-    [b]chaski[/b] can now be executed like:
+def show_next_steps_summary(with_chaski=True):
+    release_message = dedent(
+        f"""
+        [b]discovery-server[/b] should exist at:
 
-        {chaski_command}
+            {CONFIG.discovery_git_repo_path}
 
-    Consider setting a shell alias for convenience:
+        """
+    )
 
-        alias CHASKI="{chaski_command}"
+    if with_chaski:
+        chaski_command = f"poetry run -C {CONFIG.chaski_git_repo_path} chaski"
+        chaski_message = dedent(
+            f"""
+            [b]chaski[/b] can now be executed like:
 
-    [b]discovery-server[/b] should exist at:
+                {chaski_command}
 
-        {CONFIG.discovery_git_repo_path}
+            Consider setting a shell alias for convenience:
 
-    Remember to branch, update versions, and push. For example:
+                alias CHASKI="{chaski_command}"
 
-        cd {CONFIG.discovery_git_repo_path}
-        git fetch -p --all
-        git checkout discovery-1.2-rhel-8
-        git checkout -b private-{CONFIG.kerberos_username}-1.2.x
-        sed -i 's/^quipucords-server: 1.2.4$/quipucords-server: 1.2.5/' sources-version.yaml
+            Remember to branch discovery-server and update versions with chaski. For example:
 
-        CHASKI update-remote-sources {CONFIG.discovery_git_repo_path}
+                cd {CONFIG.discovery_git_repo_path}
+                git fetch -p --all
+                git checkout discovery-1.2-rhel-8
+                git checkout -b {CONFIG.private_branch_name}
+                sed -i 's/^quipucords-server: 1.2.4$/quipucords-server: 1.2.5/' sources-version.yaml
 
-        git commit -am 'chore: update quipucords-server 1.2.5'
-    """
+                CHASKI update-remote-sources {CONFIG.discovery_git_repo_path}
+
+                git commit -am 'chore: update quipucords-server 1.2.5'
+                cd push --set-upstream origin {CONFIG.private_branch_name}
+
+            """
+        )
+        release_message += chaski_message
+
+    release_message += dedent(
+        f"""
+        rhpkg --scratch build, update the release branch, and rhpkg (no scratch):
+
+            cd {CONFIG.discovery_git_repo_path}
+            rhpkg container-build --target=discovery-1.2-rhel-8-containers-candidate --scratch
+            git checkout discovery-1.2-rhel-8
+            git rebase {CONFIG.private_branch_name}
+            git push
+            rhpkg container-build --target=discovery-1.2-rhel-8-containers-candidate
+
+        """
+    )
     console.rule("Suggested Next Steps")
-    console.print(dedent(message))
+    console.print(dedent(release_message))
+
+
+def get_discovery_release_branch():
+    subprocess.call(
+        ["git", "fetch", "-p", "--all"],
+        stdout=STDOUT,
+        stderr=STDERR,
+        cwd=CONFIG.discovery_git_repo_path,
+    )
+    git_branch = subprocess.run(
+        ["git", "branch", "--list", "-a", "--color=never"],
+        cwd=CONFIG.discovery_git_repo_path,
+        capture_output=True,
+    )
+    branches = dict(
+        (
+            (str(num), name)
+            for num, name in enumerate(
+                sorted(
+                    l.strip()
+                    for l in git_branch.stdout.decode().split("\n")
+                    if l.strip().startswith("remotes/origin/discovery-")
+                )
+            )
+        )
+    )
+
+    table = Table("#", "branch ref")
+    for num, name in branches.items():
+        table.add_row(num, name)
+
+    console.print(table)
+    base_branch_key = Prompt.ask(
+        "Which # release branch from the table above?", choices=branches.keys()
+    )
+    return branches[base_branch_key]
+
+
+def new_discovery_branch():
+    base_branch = get_discovery_release_branch()
+    success = subprocess.call(
+        ["git", "checkout", base_branch],
+        cwd=CONFIG.discovery_git_repo_path,
+        stdout=STDOUT,
+        stderr=STDERR,
+    )
+    if success != 0:
+        raise Exception(f"Failed `git checkout {base_branch}`")
+    success = subprocess.call(
+        ["git", "checkout", "-b", CONFIG.private_branch_name],
+        cwd=CONFIG.discovery_git_repo_path,
+    )
+    if success != 0:
+        raise Exception(f"Failed `git checkout -b {CONFIG.private_branch_name}`")
+
+
+def update_sources_versions():
+    with open(
+        f"{CONFIG.discovery_git_repo_path}/sources-version.yaml", "r"
+    ) as versions_file:
+        sources_versions = yaml.safe_load(versions_file)
+    for key, value in sources_versions.items():
+        new_value = Prompt.ask(f"New value for '{key}'", default=value)
+        sources_versions[key] = new_value
+    with open(
+        f"{CONFIG.discovery_git_repo_path}/sources-version.yaml", "w"
+    ) as versions_file:
+        versions_file.write(yaml.dump(sources_versions, Dumper=yaml.CDumper))
+
+
+def commit_discovery_change():
+    subprocess.call(["git", "diff"], cwd=CONFIG.discovery_git_repo_path)
+    commit_message = prompt_input(
+        "git commit message for discovery-server", default="chore: update versions"
+    )
+    success = subprocess.call(
+        [
+            "git",
+            "commit",
+            "-am",
+            commit_message,
+        ],
+        cwd=CONFIG.discovery_git_repo_path,
+    )
+    if success != 0:
+        raise Exception("Failed git commit")
+
+    success = subprocess.call(
+        ["git", "push", "--set-upstream", "origin", CONFIG.private_branch_name],
+        cwd=CONFIG.discovery_git_repo_path,
+    )
+    if success != 0:
+        raise Exception("Failed git push")
+
+
+def update_versions():
+    new_discovery_branch()
+    update_sources_versions()
+
+
+def run_chaski():
+    subprocess.call(
+        [
+            "poetry",
+            "run",
+            "-C",
+            CONFIG.chaski_git_repo_path,
+            "chaski",
+            "update-remote-sources",
+            CONFIG.discovery_git_repo_path,
+        ]
+    )
 
 
 if __name__ == "__main__":
@@ -180,4 +322,10 @@ if __name__ == "__main__":
     kinit()
     set_up_chaski()
     set_up_discovery()
-    instructions()
+    if Confirm.ask("Want to [b]automate[/b] version updates?"):
+        update_versions()
+        run_chaski()
+        commit_discovery_change()
+        show_next_steps_summary(with_chaski=False)
+    else:
+        show_next_steps_summary()
