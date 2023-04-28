@@ -1,0 +1,23 @@
+FROM fedora:latest
+
+RUN dnf install -y krb5-workstation git man vim which chkconfig java-headless \
+    && curl -k -L -o /tmp/redhat-internal-cert-install-0.1-31.el7.noarch.rpm \
+    https://hdn.corp.redhat.com/rhel7-csb-stage/RPMS/noarch/redhat-internal-cert-install-0.1-31.el7.noarch.rpm \
+    && rpm -ivh /tmp/redhat-internal-cert-install-0.1-31.el7.noarch.rpm \
+    && rm -f /tmp/redhat-internal-cert-install-0.1-31.el7.noarch.rpm \
+    && curl -L -o /etc/yum.repos.d/rcm-tools-fedora.repo https://download.devel.redhat.com/rel-eng/RCMTOOLS/rcm-tools-fedora.repo \
+    && dnf install -y rhpkg brewkoji \
+    && rm -f /etc/yum.repos.d/rcm-tools-fedora.repo \
+    && dnf clean all
+RUN curl -L -o /get-pip.py https://bootstrap.pypa.io/get-pip.py \
+    && python3 /get-pip.py \
+    && rm -f /get-pip.py \
+    && python3 -m pip install poetry rich
+
+COPY configs/krb5.conf /etc/krb5.conf
+COPY configs/gitconfig /root/.gitconfig
+COPY scripts/helper.sh /helper.sh
+COPY scripts/helper.py /helper.py
+RUN chmod 755 /helper.py /helper.sh
+
+ENTRYPOINT ["/helper.sh"]
