@@ -117,13 +117,22 @@ def clone_repo(origin_url, local_path):
         warning(f"Directory already exists at {local_path}.")
         if not is_git_repo(local_path):
             raise Exception(f"{local_path} is not in a git repo work tree")
-        return
+        return False
     if subprocess.call(["git", "clone", origin_url, local_path]) != 0:
         raise Exception("Failed to clone {origin_url} to {local_path}")
+    return True
+
+
+def pull_repo(local_path):
+    if not is_git_repo(local_path):
+        raise Exception(f"{local_path} is not in a git repo work tree")
+    if subprocess.call(["git", "pull"], cwd=local_path) != 0:
+        raise Exception("Failed to pull repo at {local_path}")
 
 
 def set_up_chaski():
-    clone_repo(CONFIG.chaski_git_url, CONFIG.chaski_git_repo_path)
+    if not clone_repo(CONFIG.chaski_git_url, CONFIG.chaski_git_repo_path):
+        pull_repo(CONFIG.chaski_git_repo_path)
     with Progress() as progress:
         progress.add_task("Waiting on `poetry install` for chaski", total=None)
         if (
@@ -140,10 +149,11 @@ def set_up_chaski():
 
 
 def set_up_discovery():
-    clone_repo(
+    if not clone_repo(
         CONFIG.discovery_git_url.format(username=CONFIG.kerberos_username),
         CONFIG.discovery_git_repo_path,
-    )
+    ):
+        pull_repo(CONFIG.discovery_git_repo_path)
 
 
 def show_next_steps_summary(with_chaski=True):
