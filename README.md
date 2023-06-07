@@ -29,7 +29,7 @@ Run it! Remove the `-v` if you don't want the shared dir.
 
 ```sh
 docker run \
-    -v "$PWD"/repos:/repos
+    -v "$PWD"/repos:/repos \
     --rm -it \
     --env-file .env \
     discovery-downstream-builder:latest
