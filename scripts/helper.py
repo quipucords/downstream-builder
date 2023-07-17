@@ -27,6 +27,7 @@ class Config:
         "CHASKI_GIT_URL", "https://github.com/quipucords/chaski.git"
     )
     chaski_git_repo_path = environ.get("CHASKI_GIT_REPO_PATH", "/repos/chaski")
+    chaski_git_committish = environ.get("CHASKI_GIT_COMMITTISH", "main")
     discovery_git_url = environ.get(
         "DISCOVERY_GIT_URL",
         "ssh://{username}@pkgs.devel.redhat.com/containers/discovery-server.git",
@@ -123,6 +124,15 @@ def clone_repo(origin_url, local_path):
     return True
 
 
+def checkout_ref(local_path, ref):
+    if not is_git_repo(local_path):
+        raise Exception(f"{local_path} is not in a git repo work tree")
+    if subprocess.call(["git", "fetch", "--all"], cwd=local_path) != 0:
+        raise Exception(f"Failed to fetch all for repo at {local_path}")
+    if subprocess.call(["git", "checkout", ref], cwd=local_path) != 0:
+        raise Exception(f"Failed to checout ref {ref} for repo at {local_path}")
+
+
 def pull_repo(local_path):
     if not is_git_repo(local_path):
         raise Exception(f"{local_path} is not in a git repo work tree")
@@ -131,8 +141,9 @@ def pull_repo(local_path):
 
 
 def set_up_chaski():
-    if not clone_repo(CONFIG.chaski_git_url, CONFIG.chaski_git_repo_path):
-        pull_repo(CONFIG.chaski_git_repo_path)
+    clone_repo(CONFIG.chaski_git_url, CONFIG.chaski_git_repo_path)
+    checkout_ref(CONFIG.chaski_git_repo_path, CONFIG.chaski_git_committish)
+    pull_repo(CONFIG.chaski_git_repo_path)
     with Progress() as progress:
         progress.add_task("Waiting on `poetry install` for chaski", total=None)
         if (
