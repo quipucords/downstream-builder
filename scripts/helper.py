@@ -119,7 +119,7 @@ def clone_repo(origin_url, local_path):
             raise Exception(f"{local_path} is not in a git repo work tree")
         return False
     if subprocess.call(["git", "clone", origin_url, local_path]) != 0:
-        raise Exception("Failed to clone {origin_url} to {local_path}")
+        raise Exception(f"Failed to clone {origin_url} to {local_path}")
     return True
 
 
@@ -127,7 +127,7 @@ def pull_repo(local_path):
     if not is_git_repo(local_path):
         raise Exception(f"{local_path} is not in a git repo work tree")
     if subprocess.call(["git", "pull"], cwd=local_path) != 0:
-        raise Exception("Failed to pull repo at {local_path}")
+        raise Exception(f"Failed to pull repo at {local_path}")
 
 
 def set_up_chaski():
