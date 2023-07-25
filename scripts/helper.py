@@ -17,6 +17,38 @@ import yaml
 console = Console()
 
 
+class GitCheckoutBFailure(Exception):
+    pass
+
+
+class GitCheckoutFailure(Exception):
+    pass
+
+
+class GitCloneFailure(Exception):
+    pass
+
+
+class GitCloneFailure(Exception):
+    pass
+
+
+class GitFetchAllFailure(Exception):
+    pass
+
+
+class GitPullFailure(Exception):
+    pass
+
+
+class NotAGitRepo(Exception):
+    pass
+
+
+class PoetryInstallFailure(Exception):
+    pass
+
+
 @dataclass
 class Config:
     git_name = environ.get("GIT_NAME", None)
@@ -117,27 +149,29 @@ def clone_repo(origin_url, local_path):
     if path.isdir(local_path):
         warning(f"Directory already exists at {local_path}.")
         if not is_git_repo(local_path):
-            raise Exception(f"{local_path} is not in a git repo work tree")
+            raise NotAGitRepo(f"{local_path} is not in a git repo work tree")
         return False
     if subprocess.call(["git", "clone", origin_url, local_path]) != 0:
-        raise Exception(f"Failed to clone {origin_url} to {local_path}")
+        raise GitCloneFailure(f"Failed to clone {origin_url} to {local_path}")
     return True
 
 
 def checkout_ref(local_path, ref):
     if not is_git_repo(local_path):
-        raise Exception(f"{local_path} is not in a git repo work tree")
+        raise NotAGitRepo(f"{local_path} is not in a git repo work tree")
     if subprocess.call(["git", "fetch", "--all"], cwd=local_path) != 0:
-        raise Exception(f"Failed to fetch all for repo at {local_path}")
+        raise GitFetchAllFailure(f"Failed to fetch all for repo at {local_path}")
     if subprocess.call(["git", "checkout", ref], cwd=local_path) != 0:
-        raise Exception(f"Failed to checout ref {ref} for repo at {local_path}")
+        raise GitCheckoutFailure(
+            f"Failed to checout ref {ref} for repo at {local_path}"
+        )
 
 
 def pull_repo(local_path):
     if not is_git_repo(local_path):
-        raise Exception(f"{local_path} is not in a git repo work tree")
+        raise NotAGitRepo(f"{local_path} is not in a git repo work tree")
     if subprocess.call(["git", "pull"], cwd=local_path) != 0:
-        raise Exception(f"Failed to pull repo at {local_path}")
+        raise GitPullFailure(f"Failed to pull repo at {local_path}")
 
 
 def set_up_chaski():
@@ -154,7 +188,7 @@ def set_up_chaski():
             )
             != 0
         ):
-            raise Exception(
+            raise PoetryInstallFailure(
                 f"Failed to `poetry install` in {CONFIG.chaski_git_repo_path}"
             )
 
@@ -164,7 +198,10 @@ def set_up_discovery():
         CONFIG.discovery_git_url.format(username=CONFIG.kerberos_username),
         CONFIG.discovery_git_repo_path,
     ):
-        pull_repo(CONFIG.discovery_git_repo_path)
+        try:
+            pull_repo(CONFIG.discovery_git_repo_path)
+        except GitPullFailure as e:
+            warning(f"{e}")
 
 
 def show_next_steps_summary(with_chaski=True):
@@ -268,13 +305,15 @@ def new_discovery_branch():
         stderr=STDERR,
     )
     if success != 0:
-        raise Exception(f"Failed `git checkout {base_branch}`")
+        raise GitCheckoutFailure(f"Failed `git checkout {base_branch}`")
     success = subprocess.call(
         ["git", "checkout", "-b", CONFIG.private_branch_name],
         cwd=CONFIG.discovery_git_repo_path,
     )
     if success != 0:
-        raise Exception(f"Failed `git checkout -b {CONFIG.private_branch_name}`")
+        raise GitCheckoutBFailure(
+            f"Failed `git checkout -b {CONFIG.private_branch_name}`"
+        )
 
 
 def update_sources_versions():
