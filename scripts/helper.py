@@ -237,7 +237,7 @@ def show_next_steps_summary(with_chaski=True):
                 CHASKI update-remote-sources {CONFIG.discovery_git_repo_path}
 
                 git commit -am 'chore: update quipucords-server 1.2.5'
-                cd push --set-upstream origin {CONFIG.private_branch_name}
+                git push --set-upstream origin {CONFIG.private_branch_name}
 
             """
         )
