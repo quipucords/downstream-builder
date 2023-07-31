@@ -1,6 +1,6 @@
 FROM fedora:latest
 
-RUN dnf install -y krb5-workstation git man vim which chkconfig java-headless \
+RUN dnf install -y krb5-workstation git man vim which chkconfig java-headless cargo \
     && curl -k -L -o /tmp/redhat-internal-cert-install-0.1-31.el7.noarch.rpm \
     https://hdn.corp.redhat.com/rhel7-csb-stage/RPMS/noarch/redhat-internal-cert-install-0.1-31.el7.noarch.rpm \
     && rpm -ivh /tmp/redhat-internal-cert-install-0.1-31.el7.noarch.rpm \
