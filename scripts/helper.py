@@ -60,13 +60,14 @@ class Config:
     )
     chaski_git_repo_path = environ.get("CHASKI_GIT_REPO_PATH", "/repos/chaski")
     chaski_git_committish = environ.get("CHASKI_GIT_COMMITTISH", "main")
-    discovery_git_url = environ.get(
-        "DISCOVERY_GIT_URL",
+    discovery_server_git_url = environ.get(
+        "DISCOVERY_SERVER_GIT_URL",
         "ssh://{username}@pkgs.devel.redhat.com/containers/discovery-server.git",
+    )  # see also: https://pkgs.devel.redhat.com/cgit/containers/discovery-server
+    discovery_server_git_repo_path = environ.get(
+        "DISCOVERY_SERVER_GIT_REPO_PATH", "/repos/discovery-server"
     )
-    discovery_git_repo_path = environ.get(
-        "DISCOVERY_GIT_REPO_PATH", "/repos/discovery-server"
-    )
+    show_commands = environ.get("SHOW_COMMANDS", "0")
     verbose_subprocesses = environ.get("VERBOSE_SUBPROCESSES", "0")
     private_branch_name = f"private-{kerberos_username}-{time.time()}"
 
@@ -85,8 +86,28 @@ def warning(message):
     console.print("[b]Warning:[/b]", message, style="orange1")
 
 
+def subprocess_call(*args, **kwargs):
+    return subprocess_command(subprocess.call, *args, **kwargs)
+
+
+def subprocess_run(*args, **kwargs):
+    return subprocess_command(subprocess.run, *args, **kwargs)
+
+
+def subprocess_command(command, *args, **kwargs):
+    if Config.show_commands:
+        console.print(f"# {command.__name__}", style="bright_black")
+        for key, value in kwargs.items():
+            console.print(f"# {key}: {value}", style="bright_black")
+        if len(args) > 1:
+            console.print(f'# {" ".join([str(arg) for arg in args[1:]])}')
+        if args:
+            console.print(f'[green]$[/green] {" ".join([str(arg) for arg in args[0]])}')
+    return command(*args, **kwargs)
+
+
 def git_config_add(key, value):
-    subprocess.call(
+    subprocess_call(
         ["git", "config", "--global", "--add", key, value], stdout=STDOUT, stderr=STDERR
     )
 
@@ -121,7 +142,8 @@ def configure_git():
 
 
 def kinit():
-    if subprocess.call(["klist", "-s"]) == 0:
+    args = ["klist", "-s"]
+    if subprocess_call(args) == 0:
         warning("Skipping kinit because a ticket is already present.")
         return
 
@@ -130,12 +152,12 @@ def kinit():
         CONFIG.kerberos_username = prompt_input(
             "kerberos username", CONFIG.kerberos_username, True
         )
-        success = subprocess.call(["kinit", CONFIG.kerberos_username]) == 0
+        success = subprocess_call(["kinit", CONFIG.kerberos_username]) == 0
 
 
 def is_git_repo(local_path):
     return (
-        subprocess.call(
+        subprocess_call(
             ["git", "rev-parse", "--is-inside-work-tree"],
             cwd=local_path,
             stdout=STDOUT,
@@ -151,7 +173,7 @@ def clone_repo(origin_url, local_path):
         if not is_git_repo(local_path):
             raise NotAGitRepo(f"{local_path} is not in a git repo work tree")
         return False
-    if subprocess.call(["git", "clone", origin_url, local_path]) != 0:
+    if subprocess_call(["git", "clone", origin_url, local_path]) != 0:
         raise GitCloneFailure(f"Failed to clone {origin_url} to {local_path}")
     return True
 
@@ -159,9 +181,9 @@ def clone_repo(origin_url, local_path):
 def checkout_ref(local_path, ref):
     if not is_git_repo(local_path):
         raise NotAGitRepo(f"{local_path} is not in a git repo work tree")
-    if subprocess.call(["git", "fetch", "--all"], cwd=local_path) != 0:
+    if subprocess_call(["git", "fetch", "--all"], cwd=local_path) != 0:
         raise GitFetchAllFailure(f"Failed to fetch all for repo at {local_path}")
-    if subprocess.call(["git", "checkout", ref], cwd=local_path) != 0:
+    if subprocess_call(["git", "checkout", ref], cwd=local_path) != 0:
         raise GitCheckoutFailure(
             f"Failed to checout ref {ref} for repo at {local_path}"
         )
@@ -170,7 +192,7 @@ def checkout_ref(local_path, ref):
 def pull_repo(local_path):
     if not is_git_repo(local_path):
         raise NotAGitRepo(f"{local_path} is not in a git repo work tree")
-    if subprocess.call(["git", "pull"], cwd=local_path) != 0:
+    if subprocess_call(["git", "pull"], cwd=local_path) != 0:
         raise GitPullFailure(f"Failed to pull repo at {local_path}")
 
 
@@ -181,8 +203,15 @@ def set_up_chaski():
     with Progress() as progress:
         progress.add_task("Waiting on `poetry install` for chaski", total=None)
         if (
-            subprocess.call(
-                ["poetry", "install", "-C", CONFIG.chaski_git_repo_path],
+            subprocess_call(
+                [
+                    "python3",
+                    "-m",
+                    "poetry",
+                    "install",
+                    "-C",
+                    CONFIG.chaski_git_repo_path,
+                ],
                 stdout=STDOUT,
                 stderr=STDERR,
             )
@@ -193,29 +222,33 @@ def set_up_chaski():
             )
 
 
-def set_up_discovery():
+def set_up_server():
     if not clone_repo(
-        CONFIG.discovery_git_url.format(username=CONFIG.kerberos_username),
-        CONFIG.discovery_git_repo_path,
+        CONFIG.discovery_server_git_url.format(username=CONFIG.kerberos_username),
+        CONFIG.discovery_server_git_repo_path,
     ):
         try:
-            pull_repo(CONFIG.discovery_git_repo_path)
+            checkout_ref(CONFIG.discovery_server_git_repo_path, "master")
+            pull_repo(CONFIG.discovery_server_git_repo_path)
         except GitPullFailure as e:
             warning(f"{e}")
 
 
-def show_next_steps_summary(with_chaski=True):
+def show_next_steps_summary(
+    with_chaski=True, with_scratch=True, server_target="discovery-1-rhel-9"
+):
     release_message = dedent(
         f"""
         [b]discovery-server[/b] should exist at:
 
-            {CONFIG.discovery_git_repo_path}
-
+            {CONFIG.discovery_server_git_repo_path}
         """
     )
 
     if with_chaski:
-        chaski_command = f"poetry run -C {CONFIG.chaski_git_repo_path} chaski"
+        chaski_command = (
+            f"python3 -m poetry run -C {CONFIG.chaski_git_repo_path} chaski"
+        )
         chaski_message = dedent(
             f"""
             [b]chaski[/b] can now be executed like:
@@ -228,48 +261,55 @@ def show_next_steps_summary(with_chaski=True):
 
             Remember to branch discovery-server and update versions with chaski. For example:
 
-                cd {CONFIG.discovery_git_repo_path}
+                cd {CONFIG.discovery_server_git_repo_path}
                 git fetch -p --all
-                git checkout discovery-1.2-rhel-8
+                git checkout {server_target}
                 git checkout -b {CONFIG.private_branch_name}
-                sed -i 's/^quipucords-server: 1.2.4$/quipucords-server: 1.2.5/' sources-version.yaml
+                sed -i 's/^quipucords-server: 1.4.2$/quipucords-server: 1.4.3/' sources-version.yaml
 
-                CHASKI update-remote-sources {CONFIG.discovery_git_repo_path}
+                CHASKI update-remote-sources {CONFIG.discovery_server_git_repo_path}
 
-                git commit -am 'chore: update quipucords-server 1.2.5'
+                git commit -am 'chore: update quipucords-server 1.4.3'
                 git push --set-upstream origin {CONFIG.private_branch_name}
-
             """
         )
         release_message += chaski_message
 
+    if with_scratch:
+        release_message += dedent(
+            f"""
+            Create a scratch build:
+
+                cd {CONFIG.discovery_server_git_repo_path}
+                rhpkg container-build --target={server_target}-containers-candidate --scratch
+            """
+        )
+
     release_message += dedent(
         f"""
-        rhpkg --scratch build, update the release branch, and rhpkg (no scratch):
+        Update the release branch and create the release build:
 
-            cd {CONFIG.discovery_git_repo_path}
-            rhpkg container-build --target=discovery-1.2-rhel-8-containers-candidate --scratch
-            git checkout discovery-1.2-rhel-8
+            cd {CONFIG.discovery_server_git_repo_path}
+            git checkout {server_target}
             git rebase {CONFIG.private_branch_name}
             git push
-            rhpkg container-build --target=discovery-1.2-rhel-8-containers-candidate
-
+            rhpkg container-build --target={server_target}-containers-candidate
         """
     )
     console.rule("Suggested Next Steps")
     console.print(dedent(release_message))
 
 
-def get_discovery_release_branch():
-    subprocess.call(
+def get_existing_release_branch(repo_path):
+    subprocess_call(
         ["git", "fetch", "-p", "--all"],
         stdout=STDOUT,
         stderr=STDERR,
-        cwd=CONFIG.discovery_git_repo_path,
+        cwd=repo_path,
     )
-    git_branch = subprocess.run(
+    git_branch = subprocess_run(
         ["git", "branch", "--list", "-a", "--color=never"],
-        cwd=CONFIG.discovery_git_repo_path,
+        cwd=repo_path,
         capture_output=True,
     )
     branches = dict(
@@ -296,95 +336,121 @@ def get_discovery_release_branch():
     return branches[base_branch_key]
 
 
-def new_discovery_branch():
-    base_branch = get_discovery_release_branch()
-    success = subprocess.call(
+def new_private_branch(repo_path):
+    # Returns the *base* branch name because we may need that later.
+    base_branch = get_existing_release_branch(repo_path)
+    success = subprocess_call(
         ["git", "checkout", base_branch],
-        cwd=CONFIG.discovery_git_repo_path,
+        cwd=repo_path,
         stdout=STDOUT,
         stderr=STDERR,
     )
     if success != 0:
         raise GitCheckoutFailure(f"Failed `git checkout {base_branch}`")
-    success = subprocess.call(
+    success = subprocess_call(
         ["git", "checkout", "-b", CONFIG.private_branch_name],
-        cwd=CONFIG.discovery_git_repo_path,
+        cwd=repo_path,
     )
     if success != 0:
         raise GitCheckoutBFailure(
             f"Failed `git checkout -b {CONFIG.private_branch_name}`"
         )
+    return base_branch
 
 
-def update_sources_versions():
+def update_sources_yaml():
     with open(
-        f"{CONFIG.discovery_git_repo_path}/sources-version.yaml", "r"
+        f"{CONFIG.discovery_server_git_repo_path}/sources-version.yaml", "r"
     ) as versions_file:
         sources_versions = yaml.safe_load(versions_file)
     for key, value in sources_versions.items():
         new_value = Prompt.ask(f"New value for '{key}'", default=value)
         sources_versions[key] = new_value
     with open(
-        f"{CONFIG.discovery_git_repo_path}/sources-version.yaml", "w"
+        f"{CONFIG.discovery_server_git_repo_path}/sources-version.yaml", "w"
     ) as versions_file:
         versions_file.write(yaml.dump(sources_versions, Dumper=yaml.CDumper))
 
 
 def commit_discovery_change():
-    subprocess.call(["git", "diff"], cwd=CONFIG.discovery_git_repo_path)
+    # TODO check if the repo is dirty before trying to commit
+    subprocess_call(["git", "diff"], cwd=CONFIG.discovery_server_git_repo_path)
     commit_message = prompt_input(
         "git commit message for discovery-server", default="chore: update versions"
     )
-    success = subprocess.call(
+    success = subprocess_call(
         [
             "git",
             "commit",
             "-am",
             commit_message,
         ],
-        cwd=CONFIG.discovery_git_repo_path,
+        cwd=CONFIG.discovery_server_git_repo_path,
     )
-    if success != 0:
-        raise Exception("Failed git commit")
+    if success != 0 and not Confirm.ask(
+        "Failed git commit. Push anyway?", default=True
+    ):
+        return
 
-    success = subprocess.call(
+    success = subprocess_call(
         ["git", "push", "--set-upstream", "origin", CONFIG.private_branch_name],
-        cwd=CONFIG.discovery_git_repo_path,
+        cwd=CONFIG.discovery_server_git_repo_path,
     )
     if success != 0:
         raise Exception("Failed git push")
 
 
-def update_versions():
-    new_discovery_branch()
-    update_sources_versions()
-
-
 def run_chaski():
-    subprocess.call(
+    subprocess_call(
         [
+            "python3",
+            "-m",
             "poetry",
             "run",
             "-C",
             CONFIG.chaski_git_repo_path,
             "chaski",
             "update-remote-sources",
-            CONFIG.discovery_git_repo_path,
+            CONFIG.discovery_server_git_repo_path,
         ]
     )
+
+
+def rhpkg(command: str, target: str, repo_path: str, scratch=True):
+    args = ["rhpkg", command, "--target", target]
+    if scratch:
+        args += ["--scratch"]
+    subprocess_call(args, cwd=repo_path)
+
+
+def build_server():
+    configure_git()
+    kinit()
+    set_up_chaski()
+    set_up_server()
+    if not Confirm.ask("Want to [b]automate[/b] version updates?", default=True):
+        show_next_steps_summary()
+        return
+
+    base_branch = new_private_branch(CONFIG.discovery_server_git_repo_path)
+    target = base_branch.split("/")[-1]
+    update_sources_yaml()
+    run_chaski()
+    commit_discovery_change()
+    if not Confirm.ask("Want to create a [b]scratch[/b] build?", default=True):
+        show_next_steps_summary(with_chaski=False, server_target=target)
+        return
+
+    rhpkg(
+        command="container-build",
+        scratch=True,
+        target=f"{target}-containers-candidate",
+        repo_path=CONFIG.discovery_server_git_repo_path,
+    )
+    show_next_steps_summary(with_chaski=False, with_scratch=False, server_target=target)
 
 
 if __name__ == "__main__":
     if not sys.__stdin__.isatty():
         raise Exception("This script requires an interactive terminal.")
-    configure_git()
-    kinit()
-    set_up_chaski()
-    set_up_discovery()
-    if Confirm.ask("Want to [b]automate[/b] version updates?"):
-        update_versions()
-        run_chaski()
-        commit_discovery_change()
-        show_next_steps_summary(with_chaski=False)
-    else:
-        show_next_steps_summary()
+    build_server()
