@@ -1,7 +1,7 @@
 FROM fedora:38
 
 RUN dnf install -y \
-    krb5-workstation git man vim which chkconfig java-headless cargo \
+    krb5-workstation git man vim which chkconfig java-headless cargo packit \
     python3.11-pip python3.11-devel python3.11-setuptools \
     python3.11-poetry python3.11-rich python3.11-pyyaml \
     && curl -k -L -o /tmp/redhat-internal-cert-install-0.1-31.el7.noarch.rpm \
