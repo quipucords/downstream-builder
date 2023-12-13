@@ -1,8 +1,8 @@
 from rich.progress import Progress
 
+from discobuilder import config
 from discobuilder.adapter.git import checkout_ref, clone_repo, pull_repo
 from discobuilder.adapter.subprocess import subprocess_call
-from discobuilder.config import CONFIG, STDERR, STDOUT
 
 
 class PoetryInstallFailure(Exception):
@@ -10,9 +10,9 @@ class PoetryInstallFailure(Exception):
 
 
 def set_up_chaski():
-    clone_repo(CONFIG.chaski_git_url, CONFIG.chaski_git_repo_path)
-    checkout_ref(CONFIG.chaski_git_repo_path, CONFIG.chaski_git_committish)
-    pull_repo(CONFIG.chaski_git_repo_path)
+    clone_repo(config.CHASKI_GIT_URL, config.CHASKI_GIT_REPO_PATH)
+    checkout_ref(config.CHASKI_GIT_REPO_PATH, config.CHASKI_GIT_COMMITTISH)
+    pull_repo(config.CHASKI_GIT_REPO_PATH)
     with Progress() as progress:
         progress.add_task("Waiting on `poetry install` for chaski", total=None)
         if (
@@ -23,15 +23,15 @@ def set_up_chaski():
                     "poetry",
                     "install",
                     "-C",
-                    CONFIG.chaski_git_repo_path,
+                    config.CHASKI_GIT_REPO_PATH,
                 ],
-                stdout=STDOUT,
-                stderr=STDERR,
+                stdout=config.STDOUT,
+                stderr=config.STDERR,
             )
             != 0
         ):
             raise PoetryInstallFailure(
-                f"Failed to `poetry install` in {CONFIG.chaski_git_repo_path}"
+                f"Failed to `poetry install` in {config.CHASKI_GIT_REPO_PATH}"
             )
 
 
@@ -43,9 +43,9 @@ def run_chaski():
             "poetry",
             "run",
             "-C",
-            CONFIG.chaski_git_repo_path,
+            config.CHASKI_GIT_REPO_PATH,
             "chaski",
             "update-remote-sources",
-            CONFIG.discovery_server_git_repo_path,
+            config.DISCOVERY_SERVER_GIT_REPO_PATH,
         ]
     )

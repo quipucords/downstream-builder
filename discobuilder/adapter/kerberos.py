@@ -1,6 +1,5 @@
-from discobuilder import prompt_input, warning
+from discobuilder import config, prompt_input, warning
 from discobuilder.adapter.subprocess import subprocess_call
-from discobuilder.config import CONFIG
 
 
 def kinit():
@@ -11,7 +10,7 @@ def kinit():
 
     success = False
     while not success:
-        CONFIG.kerberos_username = prompt_input(
-            "kerberos username", CONFIG.kerberos_username, True
+        config.KERBEROS_USERNAME = prompt_input(
+            "kerberos username", config.KERBEROS_USERNAME, True
         )
-        success = subprocess_call(["kinit", CONFIG.kerberos_username]) == 0
+        success = subprocess_call(["kinit", config.KERBEROS_USERNAME]) == 0
