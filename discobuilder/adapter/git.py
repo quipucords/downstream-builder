@@ -153,7 +153,7 @@ def new_private_branch(base_branch, repo_path):
         )
 
 
-def commit_and_push(repo_path):
+def commit(repo_path, and_push=True):
     # TODO check if the repo is dirty before trying to commit
     subprocess_call(["git", "diff"], cwd=repo_path)
     dir_name = Path(repo_path).name
@@ -169,11 +169,16 @@ def commit_and_push(repo_path):
         ],
         cwd=repo_path,
     )
+    if not and_push:
+        return
     if success != 0 and not Confirm.ask(
         "Failed git commit. Push anyway?", default=True
     ):
         return
+    push(repo_path)
 
+
+def push(repo_path):
     success = subprocess_call(
         ["git", "push", "--set-upstream", "origin", config.PRIVATE_BRANCH_NAME],
         cwd=repo_path,
