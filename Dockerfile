@@ -18,7 +18,7 @@ RUN rpmdev-setuptree
 COPY configs/krb5.conf /etc/krb5.conf
 COPY configs/gitconfig /root/.gitconfig
 COPY scripts/helper.sh /helper.sh
-COPY scripts/helper.py /helper.py
-RUN chmod 755 /helper.py /helper.sh
+COPY discobuilder /discobuilder
+RUN chmod 755 /helper.sh
 
 ENTRYPOINT /helper.sh
