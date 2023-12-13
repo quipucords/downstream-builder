@@ -9,7 +9,7 @@ from discobuilder.adapter.git import (
     GitPullFailure,
     checkout_ref,
     clone_repo,
-    commit_and_push,
+    commit,
     get_existing_release_branch,
     new_private_branch,
     pull_repo,
@@ -121,7 +121,7 @@ def build_server():
     target_name = base_branch.split("/")[-1]  # maybe not strictly true but good enough
     update_sources_yaml()
     run_chaski(config.DISCOVERY_SERVER_GIT_REPO_PATH)
-    commit_and_push(config.DISCOVERY_SERVER_GIT_REPO_PATH)
+    commit(config.DISCOVERY_SERVER_GIT_REPO_PATH)
     if not Confirm.ask("Want to create a [b]scratch[/b] build?", default=True):
         show_next_steps_summary(with_chaski=False, server_target=target_name)
         return
