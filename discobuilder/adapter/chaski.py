@@ -35,7 +35,7 @@ def set_up_chaski():
             )
 
 
-def run_chaski():
+def run_chaski(distgit_path):
     subprocess_call(
         [
             "python3",
@@ -46,6 +46,6 @@ def run_chaski():
             config.CHASKI_GIT_REPO_PATH,
             "chaski",
             "update-remote-sources",
-            config.DISCOVERY_SERVER_GIT_REPO_PATH,
+            distgit_path,
         ]
     )
