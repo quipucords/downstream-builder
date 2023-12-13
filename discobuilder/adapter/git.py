@@ -1,4 +1,5 @@
 from os import path
+from pathlib import Path
 
 from rich.prompt import Confirm, Prompt
 from rich.table import Table
@@ -133,9 +134,7 @@ def get_existing_release_branch(repo_path):
     return branches[base_branch_key]
 
 
-def new_private_branch(repo_path):
-    # Returns the *base* branch name because we may need that later.
-    base_branch = get_existing_release_branch(repo_path)
+def new_private_branch(base_branch, repo_path):
     success = subprocess_call(
         ["git", "checkout", base_branch],
         cwd=repo_path,
@@ -152,14 +151,14 @@ def new_private_branch(repo_path):
         raise GitCheckoutBFailure(
             f"Failed `git checkout -b {config.PRIVATE_BRANCH_NAME}`"
         )
-    return base_branch
 
 
-def commit_discovery_change():
+def commit_and_push(repo_path):
     # TODO check if the repo is dirty before trying to commit
-    subprocess_call(["git", "diff"], cwd=config.DISCOVERY_SERVER_GIT_REPO_PATH)
+    subprocess_call(["git", "diff"], cwd=repo_path)
+    dir_name = Path(repo_path).name
     commit_message = prompt_input(
-        "git commit message for discovery-server", default="chore: update versions"
+        f"git commit message for {dir_name}", default="chore: update versions"
     )
     success = subprocess_call(
         [
@@ -168,7 +167,7 @@ def commit_discovery_change():
             "-am",
             commit_message,
         ],
-        cwd=config.DISCOVERY_SERVER_GIT_REPO_PATH,
+        cwd=repo_path,
     )
     if success != 0 and not Confirm.ask(
         "Failed git commit. Push anyway?", default=True
@@ -177,7 +176,7 @@ def commit_discovery_change():
 
     success = subprocess_call(
         ["git", "push", "--set-upstream", "origin", config.PRIVATE_BRANCH_NAME],
-        cwd=config.DISCOVERY_SERVER_GIT_REPO_PATH,
+        cwd=repo_path,
     )
     if success != 0:
         raise Exception("Failed git push")

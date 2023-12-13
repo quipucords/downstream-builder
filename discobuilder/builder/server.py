@@ -9,16 +9,15 @@ from discobuilder.adapter.git import (
     GitPullFailure,
     checkout_ref,
     clone_repo,
-    commit_discovery_change,
-    configure_git,
+    commit_and_push,
+    get_existing_release_branch,
     new_private_branch,
     pull_repo,
 )
-from discobuilder.adapter.kerberos import kinit
 from discobuilder.adapter.rhpkg import rhpkg
 
 
-def set_up_server():
+def set_up_server_repo():
     if not clone_repo(
         config.DISCOVERY_SERVER_GIT_URL.format(username=config.KERBEROS_USERNAME),
         config.DISCOVERY_SERVER_GIT_REPO_PATH,
@@ -111,27 +110,28 @@ def update_sources_yaml():
 
 
 def build_server():
-    configure_git()
-    kinit()
     set_up_chaski()
-    set_up_server()
+    set_up_server_repo()
     if not Confirm.ask("Want to [b]automate[/b] version updates?", default=True):
         show_next_steps_summary()
         return
 
-    base_branch = new_private_branch(config.DISCOVERY_SERVER_GIT_REPO_PATH)
-    target = base_branch.split("/")[-1]
+    base_branch = get_existing_release_branch(config.DISCOVERY_SERVER_GIT_REPO_PATH)
+    new_private_branch(base_branch, config.DISCOVERY_SERVER_GIT_REPO_PATH)
+    target_name = base_branch.split("/")[-1]  # maybe not strictly true but good enough
     update_sources_yaml()
-    run_chaski()
-    commit_discovery_change()
+    run_chaski(config.DISCOVERY_SERVER_GIT_REPO_PATH)
+    commit_and_push(config.DISCOVERY_SERVER_GIT_REPO_PATH)
     if not Confirm.ask("Want to create a [b]scratch[/b] build?", default=True):
-        show_next_steps_summary(with_chaski=False, server_target=target)
+        show_next_steps_summary(with_chaski=False, server_target=target_name)
         return
 
     rhpkg(
         command="container-build",
         scratch=True,
-        target=f"{target}-containers-candidate",
+        target=f"{target_name}-containers-candidate",
         repo_path=config.DISCOVERY_SERVER_GIT_REPO_PATH,
     )
-    show_next_steps_summary(with_chaski=False, with_scratch=False, server_target=target)
+    show_next_steps_summary(
+        with_chaski=False, with_scratch=False, server_target=target_name
+    )
