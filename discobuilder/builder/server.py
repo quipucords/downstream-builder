@@ -128,9 +128,9 @@ def build_server():
 
     rhpkg(
         command="container-build",
+        repo_path=config.DISCOVERY_SERVER_GIT_REPO_PATH,
         scratch=True,
         target=f"{target_name}-containers-candidate",
-        repo_path=config.DISCOVERY_SERVER_GIT_REPO_PATH,
     )
     show_next_steps_summary(
         with_chaski=False, with_scratch=False, server_target=target_name
