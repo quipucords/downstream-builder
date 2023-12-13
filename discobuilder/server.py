@@ -3,8 +3,8 @@ from textwrap import dedent
 import yaml
 from rich.prompt import Confirm, Prompt
 
-from discobuilder import console, warning
-from discobuilder.config import CONFIG
+from discobuilder import config, console, warning
+from discobuilder.adapter.chaski import run_chaski, set_up_chaski
 from discobuilder.adapter.git import (
     GitPullFailure,
     checkout_ref,
@@ -14,19 +14,18 @@ from discobuilder.adapter.git import (
     new_private_branch,
     pull_repo,
 )
-from discobuilder.adapter.rhpkg import rhpkg
-from discobuilder.adapter.chaski import run_chaski, set_up_chaski
 from discobuilder.adapter.kerberos import kinit
+from discobuilder.adapter.rhpkg import rhpkg
 
 
 def set_up_server():
     if not clone_repo(
-        CONFIG.discovery_server_git_url.format(username=CONFIG.kerberos_username),
-        CONFIG.discovery_server_git_repo_path,
+        config.DISCOVERY_SERVER_GIT_URL.format(username=config.KERBEROS_USERNAME),
+        config.DISCOVERY_SERVER_GIT_REPO_PATH,
     ):
         try:
-            checkout_ref(CONFIG.discovery_server_git_repo_path, "master")
-            pull_repo(CONFIG.discovery_server_git_repo_path)
+            checkout_ref(config.DISCOVERY_SERVER_GIT_REPO_PATH, "master")
+            pull_repo(config.DISCOVERY_SERVER_GIT_REPO_PATH)
         except GitPullFailure as e:
             warning(f"{e}")
 
@@ -38,13 +37,13 @@ def show_next_steps_summary(
         f"""
         [b]discovery-server[/b] should exist at:
 
-            {CONFIG.discovery_server_git_repo_path}
+            {config.DISCOVERY_SERVER_GIT_REPO_PATH}
         """
     )
 
     if with_chaski:
         chaski_command = (
-            f"python3 -m poetry run -C {CONFIG.chaski_git_repo_path} chaski"
+            f"python3 -m poetry run -C {config.CHASKI_GIT_REPO_PATH} chaski"
         )
         chaski_message = dedent(
             f"""
@@ -58,16 +57,16 @@ def show_next_steps_summary(
 
             Remember to branch discovery-server and update versions with chaski. For example:
 
-                cd {CONFIG.discovery_server_git_repo_path}
+                cd {config.DISCOVERY_SERVER_GIT_REPO_PATH}
                 git fetch -p --all
                 git checkout {server_target}
-                git checkout -b {CONFIG.private_branch_name}
+                git checkout -b {config.PRIVATE_BRANCH_NAME}
                 sed -i 's/^quipucords-server: 1.4.2$/quipucords-server: 1.4.3/' sources-version.yaml
 
-                CHASKI update-remote-sources {CONFIG.discovery_server_git_repo_path}
+                CHASKI update-remote-sources {config.DISCOVERY_SERVER_GIT_REPO_PATH}
 
                 git commit -am 'chore: update quipucords-server 1.4.3'
-                git push --set-upstream origin {CONFIG.private_branch_name}
+                git push --set-upstream origin {config.PRIVATE_BRANCH_NAME}
             """
         )
         release_message += chaski_message
@@ -77,7 +76,7 @@ def show_next_steps_summary(
             f"""
             Create a scratch build:
 
-                cd {CONFIG.discovery_server_git_repo_path}
+                cd {config.DISCOVERY_SERVER_GIT_REPO_PATH}
                 rhpkg container-build --target={server_target}-containers-candidate --scratch
             """
         )
@@ -86,9 +85,9 @@ def show_next_steps_summary(
         f"""
         Update the release branch and create the release build:
 
-            cd {CONFIG.discovery_server_git_repo_path}
+            cd {config.DISCOVERY_SERVER_GIT_REPO_PATH}
             git checkout {server_target}
-            git rebase {CONFIG.private_branch_name}
+            git rebase {config.PRIVATE_BRANCH_NAME}
             git push
             rhpkg container-build --target={server_target}-containers-candidate
         """
@@ -99,14 +98,14 @@ def show_next_steps_summary(
 
 def update_sources_yaml():
     with open(
-        f"{CONFIG.discovery_server_git_repo_path}/sources-version.yaml", "r"
+        f"{config.DISCOVERY_SERVER_GIT_REPO_PATH}/sources-version.yaml", "r"
     ) as versions_file:
         sources_versions = yaml.safe_load(versions_file)
     for key, value in sources_versions.items():
         new_value = Prompt.ask(f"New value for '{key}'", default=value)
         sources_versions[key] = new_value
     with open(
-        f"{CONFIG.discovery_server_git_repo_path}/sources-version.yaml", "w"
+        f"{config.DISCOVERY_SERVER_GIT_REPO_PATH}/sources-version.yaml", "w"
     ) as versions_file:
         versions_file.write(yaml.dump(sources_versions, Dumper=yaml.CDumper))
 
@@ -120,7 +119,7 @@ def build_server():
         show_next_steps_summary()
         return
 
-    base_branch = new_private_branch(CONFIG.discovery_server_git_repo_path)
+    base_branch = new_private_branch(config.DISCOVERY_SERVER_GIT_REPO_PATH)
     target = base_branch.split("/")[-1]
     update_sources_yaml()
     run_chaski()
@@ -133,6 +132,6 @@ def build_server():
         command="container-build",
         scratch=True,
         target=f"{target}-containers-candidate",
-        repo_path=CONFIG.discovery_server_git_repo_path,
+        repo_path=config.DISCOVERY_SERVER_GIT_REPO_PATH,
     )
     show_next_steps_summary(with_chaski=False, with_scratch=False, server_target=target)

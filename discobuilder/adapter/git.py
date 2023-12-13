@@ -3,10 +3,8 @@ from os import path
 from rich.prompt import Confirm, Prompt
 from rich.table import Table
 
-from discobuilder import console, prompt_input
-from discobuilder import warning
+from discobuilder import config, console, prompt_input, warning
 from discobuilder.adapter.subprocess import subprocess_call, subprocess_run
-from discobuilder.config import CONFIG, STDERR, STDOUT
 
 
 class GitCloneFailure(Exception):
@@ -35,21 +33,23 @@ class NotAGitRepo(Exception):
 
 def git_config_add(key, value):
     subprocess_call(
-        ["git", "config", "--global", "--add", key, value], stdout=STDOUT, stderr=STDERR
+        ["git", "config", "--global", "--add", key, value],
+        stdout=config.STDOUT,
+        stderr=config.STDERR,
     )
 
 
 def configure_git():
-    CONFIG.name = prompt_input("git user name", CONFIG.git_name, True)
-    CONFIG.email = prompt_input("git user email", CONFIG.git_email, True)
-    CONFIG.signingkey = prompt_input(
-        "git user signingkey", CONFIG.git_signingkey, False
+    config.name = prompt_input("git user name", config.GIT_NAME, True)
+    config.email = prompt_input("git user email", config.GIT_EMAIL, True)
+    config.signingkey = prompt_input(
+        "git user signingkey", config.GIT_SIGNINGKEY, False
     )
 
-    git_config_add("user.name", CONFIG.name)
-    git_config_add("user.email", CONFIG.email)
-    if CONFIG.signingkey:
-        git_config_add("user.signingkey", CONFIG.signingkey)
+    git_config_add("user.name", config.name)
+    git_config_add("user.email", config.email)
+    if config.signingkey:
+        git_config_add("user.signingkey", config.signingkey)
         git_config_add("commit.gpgsign", "true")
         warning("Don't forget to import your GPG signing key!")
     else:
@@ -61,8 +61,8 @@ def is_git_repo(local_path):
         subprocess_call(
             ["git", "rev-parse", "--is-inside-work-tree"],
             cwd=local_path,
-            stdout=STDOUT,
-            stderr=STDERR,
+            stdout=config.STDOUT,
+            stderr=config.STDERR,
         )
         == 0
     )
@@ -100,8 +100,8 @@ def pull_repo(local_path):
 def get_existing_release_branch(repo_path):
     subprocess_call(
         ["git", "fetch", "-p", "--all"],
-        stdout=STDOUT,
-        stderr=STDERR,
+        stdout=config.STDOUT,
+        stderr=config.STDERR,
         cwd=repo_path,
     )
     git_branch = subprocess_run(
@@ -139,25 +139,25 @@ def new_private_branch(repo_path):
     success = subprocess_call(
         ["git", "checkout", base_branch],
         cwd=repo_path,
-        stdout=STDOUT,
-        stderr=STDERR,
+        stdout=config.STDOUT,
+        stderr=config.STDERR,
     )
     if success != 0:
         raise GitCheckoutFailure(f"Failed `git checkout {base_branch}`")
     success = subprocess_call(
-        ["git", "checkout", "-b", CONFIG.private_branch_name],
+        ["git", "checkout", "-b", config.PRIVATE_BRANCH_NAME],
         cwd=repo_path,
     )
     if success != 0:
         raise GitCheckoutBFailure(
-            f"Failed `git checkout -b {CONFIG.private_branch_name}`"
+            f"Failed `git checkout -b {config.PRIVATE_BRANCH_NAME}`"
         )
     return base_branch
 
 
 def commit_discovery_change():
     # TODO check if the repo is dirty before trying to commit
-    subprocess_call(["git", "diff"], cwd=CONFIG.discovery_server_git_repo_path)
+    subprocess_call(["git", "diff"], cwd=config.DISCOVERY_SERVER_GIT_REPO_PATH)
     commit_message = prompt_input(
         "git commit message for discovery-server", default="chore: update versions"
     )
@@ -168,7 +168,7 @@ def commit_discovery_change():
             "-am",
             commit_message,
         ],
-        cwd=CONFIG.discovery_server_git_repo_path,
+        cwd=config.DISCOVERY_SERVER_GIT_REPO_PATH,
     )
     if success != 0 and not Confirm.ask(
         "Failed git commit. Push anyway?", default=True
@@ -176,8 +176,8 @@ def commit_discovery_change():
         return
 
     success = subprocess_call(
-        ["git", "push", "--set-upstream", "origin", CONFIG.private_branch_name],
-        cwd=CONFIG.discovery_server_git_repo_path,
+        ["git", "push", "--set-upstream", "origin", config.PRIVATE_BRANCH_NAME],
+        cwd=config.DISCOVERY_SERVER_GIT_REPO_PATH,
     )
     if success != 0:
         raise Exception("Failed git push")
