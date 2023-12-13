@@ -29,7 +29,7 @@ DISCOVERY_SERVER_GIT_REPO_PATH = environ.get(
 )
 
 # how noisy should I be
-SHOW_COMMANDS = environ.get("SHOW_COMMANDS", "0")
-VERBOSE_SUBPROCESSES = environ.get("VERBOSE_SUBPROCESSES", "0")
-STDOUT = subprocess.DEVNULL if VERBOSE_SUBPROCESSES == "0" else subprocess.PIPE
-STDERR = subprocess.DEVNULL if VERBOSE_SUBPROCESSES == "0" else subprocess.STDOUT
+SHOW_COMMANDS = environ.get("SHOW_COMMANDS", "0") == "1"
+VERBOSE_SUBPROCESSES = environ.get("VERBOSE_SUBPROCESSES", "0") == "1"
+STDOUT = subprocess.DEVNULL if not VERBOSE_SUBPROCESSES else subprocess.PIPE
+STDERR = subprocess.DEVNULL if not VERBOSE_SUBPROCESSES else subprocess.STDOUT
