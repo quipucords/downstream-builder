@@ -43,7 +43,7 @@ def configure_git():
     config.name = prompt_input("git user name", config.GIT_NAME, True)
     config.email = prompt_input("git user email", config.GIT_EMAIL, True)
     config.signingkey = prompt_input(
-        "git user signingkey", config.GIT_SIGNINGKEY, False
+        "git user signingkey", config.GIT_SIGNING_KEY, False
     )
 
     git_config_add("user.name", config.name)
