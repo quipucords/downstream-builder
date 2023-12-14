@@ -75,9 +75,8 @@ def build_source_rpm(specfile_path):
 def import_source_rpm(version):
     srpms_dir = Path.home() / "rpmbuild" / "SRPMS"
     for srpm in list(srpms_dir.glob(f"discovery-cli-{version}-*.src.rpm")):
-        subprocess_run(
-            ["rhpkg", "import", srpm], cwd=config.DISCOVERY_CLI_GIT_REPO_PATH
-        )
+        rhpkg.srpm_import(config.DISCOVERY_CLI_GIT_REPO_PATH, srpm)
+        # naively expect exactly one match
         break
 
 
