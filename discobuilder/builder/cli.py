@@ -111,13 +111,14 @@ def build_cli():
             default_commit_message=f"chore: update version to {new_version}",
             and_push=False,
         )
-    build_source_rpm(specfile_path)
-    import_source_rpm(new_version)
-    commit(
-        config.DISCOVERY_CLI_GIT_REPO_PATH,
-        default_commit_message="chore: update sources",
-        and_push=True,
-    )
+        build_source_rpm(specfile_path)
+        import_source_rpm(new_version)
+        commit(
+            config.DISCOVERY_CLI_GIT_REPO_PATH,
+            default_commit_message="chore: update sources",
+            and_push=False,
+        )
+    push(config.DISCOVERY_CLI_GIT_REPO_PATH)
 
     if not Confirm.ask("Want to create a [b]scratch[/b] build?", default=True):
         # show_next_steps_summary(with_chaski=False, server_target=target_name)
