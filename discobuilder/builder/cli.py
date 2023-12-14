@@ -106,10 +106,18 @@ def build_cli():
 
     specfile_path = Path(f"{config.DISCOVERY_CLI_GIT_REPO_PATH}/discovery-cli.spec")
     if new_version := update_specfile_version(specfile_path):
-        commit(config.DISCOVERY_CLI_GIT_REPO_PATH, and_push=False)
+        commit(
+            config.DISCOVERY_CLI_GIT_REPO_PATH,
+            default_commit_message=f"chore: update version to {new_version}",
+            and_push=False,
+        )
     build_source_rpm(specfile_path)
     import_source_rpm(new_version)
-    commit(config.DISCOVERY_CLI_GIT_REPO_PATH, and_push=True)
+    commit(
+        config.DISCOVERY_CLI_GIT_REPO_PATH,
+        default_commit_message="chore: update sources",
+        and_push=True,
+    )
 
     if not Confirm.ask("Want to create a [b]scratch[/b] build?", default=True):
         # show_next_steps_summary(with_chaski=False, server_target=target_name)
