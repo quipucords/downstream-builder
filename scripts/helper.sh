@@ -12,4 +12,9 @@ export DISCOVERY_GIT_REPO_PATH
 export POETRY_CACHE_DIR
 export VERBOSE_SUBPROCESSES
 
+mkdir -p ~/.ssh
+chmod 700 ~/.ssh
+echo "$KNOWN_HOSTS" >> ~/.ssh/known_hosts
+chmod 644 ~/.ssh/known_hosts
+
 /usr/bin/python3 -m discobuilder
