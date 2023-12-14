@@ -14,7 +14,7 @@ from discobuilder.adapter.git import (
     pull_repo,
     push,
 )
-from discobuilder.adapter.rhpkg import rhpkg
+from discobuilder.adapter import rhpkg
 from discobuilder.adapter.subprocess import subprocess_run
 
 
@@ -117,8 +117,7 @@ def build_cli():
         return
 
     release = Prompt.ask(f"What rhpkg '--release' value?", default="rhel-9")
-    rhpkg(
-        command="build",
+    rhpkg.build(
         scratch=True,
         release=release,
         target=f"{target_name}-candidate",

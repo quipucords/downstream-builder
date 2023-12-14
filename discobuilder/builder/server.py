@@ -14,7 +14,7 @@ from discobuilder.adapter.git import (
     new_private_branch,
     pull_repo,
 )
-from discobuilder.adapter.rhpkg import rhpkg
+from discobuilder.adapter import rhpkg
 
 
 def set_up_server_repo():
@@ -126,7 +126,7 @@ def build_server():
         show_next_steps_summary(with_chaski=False, server_target=target_name)
         return
 
-    rhpkg(
+    rhpkg.container_build(
         command="container-build",
         repo_path=config.DISCOVERY_SERVER_GIT_REPO_PATH,
         scratch=True,
