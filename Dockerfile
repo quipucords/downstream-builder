@@ -13,12 +13,16 @@ RUN dnf install -y \
     && rm -f /etc/yum.repos.d/rcm-tools-fedora.repo \
     && dnf clean all
 
-RUN rpmdev-setuptree
-
 COPY configs/krb5.conf /etc/krb5.conf
-COPY configs/gitconfig /root/.gitconfig
 COPY scripts/helper.sh /helper.sh
 COPY discobuilder /discobuilder
-RUN chmod 755 /helper.sh
+RUN chmod 555 /helper.sh
+RUN mkdir -p /repos
+RUN useradd -ms /bin/bash builder
+RUN chown builder /repos
+
+USER builder
+COPY configs/gitconfig /home/builder/.gitconfig
+RUN rpmdev-setuptree
 
 ENTRYPOINT /helper.sh
