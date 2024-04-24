@@ -156,12 +156,12 @@ def new_private_branch(base_branch, repo_path):
     if success != 0:
         raise GitCheckoutFailure(f"Failed `git checkout {base_branch}`")
     success = subprocess_call(
-        ["git", "checkout", "-b", config.PRIVATE_BRANCH_NAME],
+        ["git", "checkout", "-B", config.PRIVATE_BRANCH_NAME],
         cwd=repo_path,
     )
     if success != 0:
         raise GitCheckoutBFailure(
-            f"Failed `git checkout -b {config.PRIVATE_BRANCH_NAME}`"
+            f"Failed `git checkout -B {config.PRIVATE_BRANCH_NAME}`"
         )
 
 
