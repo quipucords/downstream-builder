@@ -98,7 +98,9 @@ def pull_repo(local_path):
         raise GitPullFailure(f"Failed to pull repo at {local_path}")
 
 
-def get_existing_release_branch(repo_path):
+def get_existing_release_branch(
+    repo_path, branch_prefix_filter="", default_branch_name=None
+):
     subprocess_call(
         ["git", "fetch", "-p", "--all"],
         stdout=config.STDOUT,
@@ -115,12 +117,19 @@ def get_existing_release_branch(repo_path):
             (str(num), name)
             for num, name in enumerate(
                 sorted(
-                    l.strip()
-                    for l in git_branch.stdout.decode().split("\n")
-                    if l.strip().startswith("remotes/origin/discovery-")
+                    name.strip()
+                    for name in git_branch.stdout.decode().split("\n")
+                    if name.strip().startswith(branch_prefix_filter)
                 )
             )
         )
+    )
+    default_choice = (
+        next(
+            (num for num, name in branches.items() if name == default_branch_name), None
+        )
+        if default_branch_name
+        else None
     )
 
     table = Table("#", "branch ref")
@@ -128,8 +137,11 @@ def get_existing_release_branch(repo_path):
         table.add_row(num, name)
 
     console.print(table)
+    kwargs = {"default": default_choice} if default_choice is not None else {}
     base_branch_key = Prompt.ask(
-        "Which # release branch from the table above?", choices=branches.keys()
+        "Which # release branch from the table above?",
+        choices=branches.keys(),
+        **kwargs,
     )
     return branches[base_branch_key]
 

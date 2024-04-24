@@ -116,7 +116,11 @@ def build_server():
         show_next_steps_summary()
         return
 
-    base_branch = get_existing_release_branch(config.DISCOVERY_SERVER_GIT_REPO_PATH)
+    base_branch = get_existing_release_branch(
+        config.DISCOVERY_SERVER_GIT_REPO_PATH,
+        config.DISCOVERY_SERVER_GIT_REMOTE_RELEASE_BRANCH_PREFIX,
+        config.DISCOVERY_SERVER_GIT_REMOTE_RELEASE_BRANCH_DEFAULT,
+    )
     new_private_branch(base_branch, config.DISCOVERY_SERVER_GIT_REPO_PATH)
     target_name = base_branch.split("/")[-1]  # maybe not strictly true but good enough
     update_sources_yaml()
