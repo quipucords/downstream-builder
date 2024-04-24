@@ -39,7 +39,7 @@ def update_specfile_version(specfile_path):
 
     version_line_match = version_line_number = None
     for version_line_number, line in enumerate(specfile_contents):
-        version_line_match = re.match("^(Version:\s*)(.+)$", line)
+        version_line_match = re.match(r"^(Version:\s*)(.+)$", line)
         if version_line_match:
             break
 
