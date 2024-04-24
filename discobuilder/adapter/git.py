@@ -192,7 +192,14 @@ def commit(repo_path, and_push=True, default_commit_message="chore: update versi
 
 def push(repo_path):
     success = subprocess_call(
-        ["git", "push", "--set-upstream", "origin", config.PRIVATE_BRANCH_NAME],
+        [
+            "git",
+            "push",
+            "--force",
+            "--set-upstream",
+            "origin",
+            config.PRIVATE_BRANCH_NAME,
+        ],
         cwd=repo_path,
     )
     if success != 0:
