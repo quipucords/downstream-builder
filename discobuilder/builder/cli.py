@@ -1,9 +1,11 @@
+from textwrap import dedent
+
 import re
 from pathlib import Path
 
 from rich.prompt import Confirm, Prompt
 
-from discobuilder import config, warning
+from discobuilder import config, console, warning
 from discobuilder.adapter.git import (
     GitPullFailure,
     checkout_ref,
@@ -97,7 +99,7 @@ def build_cli():
     set_up_cli_repo()
 
     if not Confirm.ask("Want to [b]automate[/b] version updates?", default=True):
-        # show_next_steps_summary()
+        show_next_steps_summary(with_scratch=True)
         return
 
     base_branch = get_existing_release_branch(
@@ -125,13 +127,58 @@ def build_cli():
     push(config.DISCOVERY_CLI_GIT_REPO_PATH)
 
     if not Confirm.ask("Want to create a [b]scratch[/b] build?", default=True):
-        # show_next_steps_summary(with_chaski=False, server_target=target_name)
+        show_next_steps_summary(with_scratch=True)
         return
 
     release = Prompt.ask(f"What rhpkg '--release' value?", default="rhel-9")
+    target = f"{target_name}-candidate"
     rhpkg.build(
         scratch=True,
         release=release,
-        target=f"{target_name}-candidate",
+        target=target,
         repo_path=config.DISCOVERY_CLI_GIT_REPO_PATH,
     )
+
+    show_next_steps_summary(with_scratch=False, release=release, target=target)
+
+
+def show_next_steps_summary(with_scratch=True, release="rhel-9", target=None):
+    if not target:
+        target = f"discovery-1-{release}-candidate"
+
+    release_message = dedent(
+        f"""
+        [b]discovery-cli[/b] should exist at:
+
+            {config.DISCOVERY_CLI_GIT_REPO_PATH}
+        """
+    )
+
+    if with_scratch:
+        release_message += dedent(
+            f"""
+            Create a scratch build:
+
+                cd {config.DISCOVERY_CLI_GIT_REPO_PATH}
+                rhpkg build --release {release} --target={target} --scratch
+            """
+        )
+
+    release_message += dedent(
+        f"""
+        Update the release branch and create the release build:
+
+            cd {config.DISCOVERY_CLI_GIT_REPO_PATH}
+            git checkout discovery-1-{release}
+            git rebase {config.PRIVATE_BRANCH_NAME}
+            git push
+            rhpkg build --scratch
+            rhpkg build
+
+        Note that `--release` and `--target` arguments are not required when you invoke `rhpkg build` from the release branches.
+
+        Then repeat all of these steps for any other RHEL build releases (`rhel-9`, `rhel-8`).
+        """
+    )
+    console.rule("Suggested Next Steps")
+    console.print(dedent(release_message))
