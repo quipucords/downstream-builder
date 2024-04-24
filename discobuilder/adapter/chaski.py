@@ -13,26 +13,32 @@ def set_up_chaski():
     clone_repo(config.CHASKI_GIT_URL, config.CHASKI_GIT_REPO_PATH)
     checkout_ref(config.CHASKI_GIT_REPO_PATH, config.CHASKI_GIT_COMMITTISH)
     pull_repo(config.CHASKI_GIT_REPO_PATH)
-    with Progress() as progress:
-        progress.add_task("Waiting on `poetry install` for chaski", total=None)
-        if (
-            subprocess_call(
-                [
-                    "python3",
-                    "-m",
-                    "poetry",
-                    "install",
-                    "-C",
-                    config.CHASKI_GIT_REPO_PATH,
-                ],
-                stdout=config.STDOUT,
-                stderr=config.STDERR,
-            )
-            != 0
-        ):
-            raise PoetryInstallFailure(
-                f"Failed to `poetry install` in {config.CHASKI_GIT_REPO_PATH}"
-            )
+    if config.VERBOSE_SUBPROCESSES:
+        poetry_install_chaski()
+    else:
+        with Progress() as progress:
+            poetry_install_chaski()
+            progress.add_task("Waiting on `poetry install` for chaski", total=None)
+
+
+def poetry_install_chaski():
+    command = [
+        "python3",
+        "-m",
+        "poetry",
+        "install",
+        "-C",
+        config.CHASKI_GIT_REPO_PATH,
+    ]
+    kwargs = (
+        {"stdout": config.STDOUT, "stderr": config.STDERR}
+        if config.VERBOSE_SUBPROCESSES
+        else {}
+    )
+    if subprocess_call(command, **kwargs) != 0:
+        raise PoetryInstallFailure(
+            f"Failed to `poetry install` in {config.CHASKI_GIT_REPO_PATH}"
+        )
 
 
 def run_chaski(distgit_path):
