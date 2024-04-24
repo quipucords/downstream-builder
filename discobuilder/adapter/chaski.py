@@ -55,3 +55,16 @@ def run_chaski(distgit_path):
             distgit_path,
         ]
     )
+    subprocess_call(
+        [
+            "python3",
+            "-m",
+            "poetry",
+            "run",
+            "-C",
+            config.CHASKI_GIT_REPO_PATH,
+            "chaski",
+            "update-rust-deps",
+            distgit_path,
+        ]
+    )
