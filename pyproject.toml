@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "downstream-builder"
+version = "0.1.0"
+description = ""
+authors = ["Brad Smith <brasmith@redhat.com>"]
+readme = "README.md"
+packages = [{ include = "discobuilder" }]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+rich = "^13.7.1"
+PyYAML = "^6.0.1"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
