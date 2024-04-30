@@ -49,7 +49,7 @@ def update_specfile_version(specfile_path):
         raise Exception("Version not found in spec file!")
 
     old_version = version_line_match.group(2)
-    new_version = Prompt.ask(f"New version for spec file", default=old_version)
+    new_version = Prompt.ask("New version for spec file", default=old_version)
     if new_version == old_version:
         return False
 
@@ -130,7 +130,7 @@ def build_cli():
         show_next_steps_summary(with_scratch=True)
         return
 
-    release = Prompt.ask(f"What rhpkg '--release' value?", default="rhel-9")
+    release = Prompt.ask("What rhpkg '--release' value?", default="rhel-9")
     target = f"{target_name}-candidate"
     rhpkg.build(
         scratch=True,
