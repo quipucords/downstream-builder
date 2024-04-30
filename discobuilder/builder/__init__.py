@@ -2,8 +2,8 @@ from rich.prompt import Confirm, Prompt
 
 from discobuilder.adapter.git import configure_git
 from discobuilder.adapter.kerberos import kinit
-from discobuilder.builder.cli import build_cli
-from discobuilder.builder.server import build_server
+from discobuilder.builder.cli import build_cli  # noqa: F401
+from discobuilder.builder.server import build_server  # noqa: F401
 
 
 def build():
