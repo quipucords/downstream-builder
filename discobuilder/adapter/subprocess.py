@@ -1,16 +1,21 @@
-import subprocess
+from subprocess import call, run, check_call, CalledProcessError
 
 from discobuilder import config, console
 
 
 def subprocess_call(*args, **kwargs):
     """Execute command and return its return code/status."""
-    return subprocess_command(subprocess.call, *args, **kwargs)
+    return subprocess_command(call, *args, **kwargs)
 
 
 def subprocess_run(*args, **kwargs):
     """Execute command and return a CompletedProcess instance."""
-    return subprocess_command(subprocess.run, *args, **kwargs)
+    return subprocess_command(run, *args, **kwargs)
+
+
+def subprocess_check_call(*args, **kwargs):
+    """Execute command and raise CalledProcessError upon non-zero exit."""
+    return subprocess_command(check_call, *args, **kwargs)
 
 
 def subprocess_command(command, *args, **kwargs):

@@ -2,7 +2,7 @@ from rich.progress import Progress
 
 from discobuilder import config
 from discobuilder.adapter.git import checkout_ref, clone_repo, pull_repo
-from discobuilder.adapter.subprocess import subprocess_call
+from discobuilder.adapter.subprocess import subprocess_call, subprocess_check_call, CalledProcessError
 
 
 class PoetryInstallFailure(Exception):
@@ -35,14 +35,16 @@ def poetry_install_chaski():
         if config.VERBOSE_SUBPROCESSES
         else {}
     )
-    if subprocess_call(command, **kwargs) != 0:
+    try:
+        subprocess_check_call(command, **kwargs)
+    except CalledProcessError:
         raise PoetryInstallFailure(
             f"Failed to `poetry install` in {config.CHASKI_GIT_REPO_PATH}"
         )
 
 
 def run_chaski(distgit_path):
-    subprocess_call(
+    subprocess_check_call(
         [
             "python3",
             "-m",
@@ -55,7 +57,7 @@ def run_chaski(distgit_path):
             distgit_path,
         ]
     )
-    subprocess_call(
+    subprocess_check_call(
         [
             "python3",
             "-m",
