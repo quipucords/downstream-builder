@@ -114,14 +114,14 @@ def build_cli():
     if new_version := update_specfile_version(specfile_path):
         commit(
             config.DISCOVERY_CLI_GIT_REPO_PATH,
-            default_commit_message=f"chore: update version to {new_version}",
+            default_commit_message=f"build: update version to {new_version}",
             and_push=False,
         )
         build_source_rpm(specfile_path)
         import_source_rpm(new_version)
         commit(
             config.DISCOVERY_CLI_GIT_REPO_PATH,
-            default_commit_message="chore: update sources",
+            default_commit_message="build: update sources",
             and_push=False,
         )
     push(config.DISCOVERY_CLI_GIT_REPO_PATH)
