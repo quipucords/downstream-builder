@@ -165,7 +165,7 @@ def new_private_branch(base_branch, repo_path):
         )
 
 
-def commit(repo_path, and_push=True, default_commit_message="chore: update versions"):
+def commit(repo_path, and_push=True, default_commit_message="build: update versions"):
     # TODO check if the repo is dirty before trying to commit
     subprocess_call(["git", "diff", "HEAD"], cwd=repo_path)
     dir_name = Path(repo_path).name
