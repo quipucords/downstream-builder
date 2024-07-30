@@ -87,7 +87,7 @@ def checkout_ref(local_path, ref):
         raise GitFetchAllFailure(f"Failed to fetch all for repo at {local_path}")
     if subprocess_call(["git", "checkout", ref], cwd=local_path) != 0:
         raise GitCheckoutFailure(
-            f"Failed to checout ref {ref} for repo at {local_path}"
+            f"Failed to checkout ref {ref} for repo at {local_path}"
         )
 
 
