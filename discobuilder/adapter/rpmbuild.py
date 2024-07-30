@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from discobuilder.adapter.subprocess import subprocess_run
+from discobuilder.adapter.subprocess import subprocess_check_call
 from discobuilder import config
 
 
@@ -9,8 +9,8 @@ def get_srpms_path() -> Path:
 
 
 def purge_rpmbuild_tree():
-    subprocess_run(["rpmdev-setuptree"])
-    subprocess_run(
+    subprocess_check_call(["rpmdev-setuptree"])
+    subprocess_check_call(
         [
             "find",
             Path.home() / "rpmbuild",
@@ -24,12 +24,12 @@ def purge_rpmbuild_tree():
 
 
 def build_source_rpm(specfile_path: Path):
-    subprocess_run(
+    subprocess_check_call(
         ["spectool", "--sourcedir", "--get-files", specfile_path],
         stdout=config.STDOUT,
         stderr=config.STDERR,
     )
-    subprocess_run(
+    subprocess_check_call(
         ["rpmbuild", "-bs", specfile_path, "--verbose", "--clean"],
         stdout=config.STDOUT,
         stderr=config.STDERR,
