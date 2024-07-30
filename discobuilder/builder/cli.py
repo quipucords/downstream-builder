@@ -1,3 +1,4 @@
+# TODO: Refactor/deduplicate a lot of similar code between this and ./installer.py.
 from textwrap import dedent
 
 import re
