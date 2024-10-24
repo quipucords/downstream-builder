@@ -2,7 +2,7 @@ from rich.progress import Progress
 
 from discobuilder import config
 from discobuilder.adapter.git import checkout_ref, clone_repo, pull_repo
-from discobuilder.adapter.subprocess import subprocess_call, subprocess_check_call, CalledProcessError
+from discobuilder.adapter.subprocess import subprocess_check_call, CalledProcessError
 
 
 class PoetryInstallFailure(Exception):

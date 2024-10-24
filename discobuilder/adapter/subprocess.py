@@ -1,4 +1,4 @@
-from subprocess import call, run, check_call, CalledProcessError
+from subprocess import call, run, check_call
 
 from discobuilder import config, console
 
