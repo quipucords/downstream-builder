@@ -1,3 +1,4 @@
+# TODO: Refactor/deduplicate a lot of similar code between this and ./installer.py.
 from textwrap import dedent
 
 import re
@@ -16,23 +17,7 @@ from discobuilder.adapter.git import (
     pull_repo,
     push,
 )
-from discobuilder.adapter import rhpkg
-from discobuilder.adapter.subprocess import subprocess_run
-
-
-def purge_rpmbuild_tree():
-    subprocess_run(["rpmdev-setuptree"])
-    subprocess_run(
-        [
-            "find",
-            Path.home() / "rpmbuild",
-            "-type",
-            "f",
-            "-printf",
-            "deleted '%p'\\n",
-            "-delete",
-        ],
-    )
+from discobuilder.adapter import rhpkg, rpmbuild
 
 
 def update_specfile_version(specfile_path):
@@ -61,21 +46,8 @@ def update_specfile_version(specfile_path):
     return new_version
 
 
-def build_source_rpm(specfile_path):
-    subprocess_run(
-        ["spectool", "--sourcedir", "--get-files", specfile_path],
-        stdout=config.STDOUT,
-        stderr=config.STDERR,
-    )
-    subprocess_run(
-        ["rpmbuild", "-bs", specfile_path, "--verbose", "--clean"],
-        stdout=config.STDOUT,
-        stderr=config.STDERR,
-    )
-
-
 def import_source_rpm(version):
-    srpms_dir = Path.home() / "rpmbuild" / "SRPMS"
+    srpms_dir = rpmbuild.get_srpms_path()
     for srpm in list(srpms_dir.glob(f"discovery-cli-{version}-*.src.rpm")):
         rhpkg.srpm_import(config.DISCOVERY_CLI_GIT_REPO_PATH, srpm)
         # naively expect exactly one match
@@ -95,7 +67,7 @@ def set_up_cli_repo():
 
 
 def build_cli():
-    purge_rpmbuild_tree()
+    rpmbuild.purge_rpmbuild_tree()
     set_up_cli_repo()
 
     if not Confirm.ask("Want to [b]automate[/b] version updates?", default=True):
@@ -114,14 +86,14 @@ def build_cli():
     if new_version := update_specfile_version(specfile_path):
         commit(
             config.DISCOVERY_CLI_GIT_REPO_PATH,
-            default_commit_message=f"chore: update version to {new_version}",
+            default_commit_message=f"build: update version to {new_version}",
             and_push=False,
         )
-        build_source_rpm(specfile_path)
+        rpmbuild.build_source_rpm(specfile_path)
         import_source_rpm(new_version)
         commit(
             config.DISCOVERY_CLI_GIT_REPO_PATH,
-            default_commit_message="chore: update sources",
+            default_commit_message="build: update sources",
             and_push=False,
         )
     push(config.DISCOVERY_CLI_GIT_REPO_PATH)

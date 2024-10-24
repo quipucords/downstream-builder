@@ -64,7 +64,7 @@ def show_next_steps_summary(
 
                 CHASKI update-remote-sources {config.DISCOVERY_SERVER_GIT_REPO_PATH}
 
-                git commit -am 'chore: update quipucords-server 1.4.3'
+                git commit -am 'build: update quipucords-server 1.4.3'
                 git push --set-upstream origin {config.PRIVATE_BRANCH_NAME}
             """
         )

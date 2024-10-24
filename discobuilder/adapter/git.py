@@ -87,7 +87,7 @@ def checkout_ref(local_path, ref):
         raise GitFetchAllFailure(f"Failed to fetch all for repo at {local_path}")
     if subprocess_call(["git", "checkout", ref], cwd=local_path) != 0:
         raise GitCheckoutFailure(
-            f"Failed to checout ref {ref} for repo at {local_path}"
+            f"Failed to checkout ref {ref} for repo at {local_path}"
         )
 
 
@@ -165,7 +165,11 @@ def new_private_branch(base_branch, repo_path):
         )
 
 
-def commit(repo_path, and_push=True, default_commit_message="chore: update versions"):
+def add(repo_path, file_path):
+    subprocess_call(["git", "add", str(file_path)], cwd=repo_path)
+
+
+def commit(repo_path, and_push=True, default_commit_message="build: update versions"):
     # TODO check if the repo is dirty before trying to commit
     subprocess_call(["git", "diff", "HEAD"], cwd=repo_path)
     dir_name = Path(repo_path).name
