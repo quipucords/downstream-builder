@@ -63,6 +63,7 @@ def show_next_steps_summary(
                 sed -i 's/^quipucords-server: 1.4.2$/quipucords-server: 1.4.3/' sources-version.yaml
 
                 CHASKI update-remote-sources {config.DISCOVERY_SERVER_GIT_REPO_PATH}
+                CHASKI update-rust-deps {config.DISCOVERY_SERVER_GIT_REPO_PATH}
 
                 git commit -am 'build: update quipucords-server 1.4.3'
                 git push --set-upstream origin {config.PRIVATE_BRANCH_NAME}
