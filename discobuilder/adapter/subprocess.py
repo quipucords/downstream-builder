@@ -24,7 +24,7 @@ def subprocess_command(command, *args, **kwargs):
         for key, value in kwargs.items():
             console.print(f"# {key}: {value}", style="bright_black")
         if len(args) > 1:
-            console.print(f'# {" ".join([str(arg) for arg in args[1:]])}')
+            console.print(f"# {' '.join([str(arg) for arg in args[1:]])}")
         if args:
-            console.print(f'[green]$[/green] {" ".join([str(arg) for arg in args[0]])}')
+            console.print(f"[green]$[/green] {' '.join([str(arg) for arg in args[0]])}")
     return command(*args, **kwargs)
