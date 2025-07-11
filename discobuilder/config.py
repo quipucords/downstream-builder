@@ -15,11 +15,6 @@ PRIVATE_BRANCH_NAME = environ.get(
 )
 
 # where are my repos
-CHASKI_GIT_URL = environ.get(
-    "CHASKI_GIT_URL", "https://github.com/quipucords/chaski.git"
-)
-CHASKI_GIT_REPO_PATH = environ.get("CHASKI_GIT_REPO_PATH", "/repos/chaski")
-CHASKI_GIT_COMMITTISH = environ.get("CHASKI_GIT_COMMITTISH", "main")
 # discovery-cli is downstream repo for packaging qpc
 DISCOVERY_CLI_GIT_URL = environ.get(
     "DISCOVERY_CLI_GIT_URL",
