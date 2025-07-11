@@ -1,20 +1,30 @@
-[tool.poetry]
+[project]
 name = "downstream-builder"
 version = "0.1.0"
-description = ""
-authors = ["Brad Smith <brasmith@redhat.com>"]
+description = "Utility to assist building downstream artifacts for quipucords-related projects."
+requires-python = "<3.14,>=3.12"
+authors = [
+    {name = "Quipucords Dev Team", email = "quipucords@redhat.com"},
+]
 readme = "README.md"
-packages = [{ include = "discobuilder" }]
+# license should preferably follow identifiers listed at the SPDX Open Source License Registry.
+# https://spdx.org/licenses/
+license = {text = "GPL-3.0-or-later"}
+dependencies = [
+    "pyyaml>=6.0.2",
+    "requests>=2.32.4",
+    "rich>=14.0.0",
+]
 
-[tool.poetry.dependencies]
-python = "^3.11"
-rich = "^13.7.1"
-PyYAML = "^6.0.1"
-requests = "^2.32.3"
+[tool.setuptools]
+packages = ["discobuilder"]
 
-[tool.poetry.group.dev.dependencies]
-ruff = "^0"
+[dependency-groups]
+dev = [
+    "ruff>=0.12.3",
+]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["setuptools >= 70"]
+build-backend = "setuptools.build_meta"
+
