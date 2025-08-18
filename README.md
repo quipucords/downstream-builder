@@ -33,7 +33,7 @@ Run it! Remove the `-v` or `--env-file` arguments if you do not wish to use the 
 
 ```sh
 podman run \
-    -v "$PWD"/repos:/repos \
+    -v "$PWD"/repos:/repos:Z \
     --rm -it \
     --env-file .env \
     downstream-builder:latest
