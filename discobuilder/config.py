@@ -25,7 +25,7 @@ DISCOVERY_CLI_GIT_REPO_PATH = environ.get(
 )
 DISCOVERY_CLI_GIT_REMOTE_RELEASE_BRANCH_DEFAULT = environ.get(
     "DISCOVERY_CLI_GIT_REMOTE_RELEASE_BRANCH_DEFAULT",
-    "remotes/origin/discovery-1-rhel-9",
+    "remotes/origin/discovery-2-rhel-9",
 )
 DISCOVERY_CLI_GIT_REMOTE_RELEASE_BRANCH_PREFIX = environ.get(
     "DISCOVERY_CLI_GIT_REMOTE_RELEASE_BRANCH_PREFIX", "remotes/origin/discovery-"
@@ -47,7 +47,7 @@ DISCOVERY_INSTALLER_GIT_REPO_PATH = environ.get(
 )
 DISCOVERY_INSTALLER_GIT_REMOTE_RELEASE_BRANCH_DEFAULT = environ.get(
     "DISCOVERY_INSTALLER_GIT_REMOTE_RELEASE_BRANCH_DEFAULT",
-    "remotes/origin/discovery-1-rhel-9",
+    "remotes/origin/discovery-2-rhel-9",
 )
 DISCOVERY_INSTALLER_GIT_REMOTE_RELEASE_BRANCH_PREFIX = environ.get(
     "DISCOVERY_INSTALLER_GIT_REMOTE_RELEASE_BRANCH_PREFIX", "remotes/origin/discovery-"
