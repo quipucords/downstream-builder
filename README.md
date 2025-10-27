@@ -4,7 +4,7 @@
 
 This is a containerized interactive script to simplify the quipucords-to-Discovery downstream build process. This means you don't need to install `rhpkg` and `brewkoji` on your own machine or run a custom VM with them any longer!
 
-This script can trigger container builds for quipucords (Discovery) or RPMs for qpc (discovery-cli).
+This script can trigger container builds for quipucords (Discovery) or RPMs for qpc (discovery-cli) or quipucordsctl (discoveryctl).
 
 ## How do I use it?
 
@@ -24,7 +24,7 @@ vi .env
 Build the container image:
 
 ```sh
-podman build -t downstream-builder:latest .
+podman build -f Containerfile -t downstream-builder:latest .
 ```
 
 Connect to the Red Hat VPN. This program communicates with several internal hosts and will fail without appropriate network access.

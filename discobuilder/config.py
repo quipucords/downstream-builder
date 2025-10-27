@@ -52,6 +52,28 @@ DISCOVERY_INSTALLER_GIT_REMOTE_RELEASE_BRANCH_DEFAULT = environ.get(
 DISCOVERY_INSTALLER_GIT_REMOTE_RELEASE_BRANCH_PREFIX = environ.get(
     "DISCOVERY_INSTALLER_GIT_REMOTE_RELEASE_BRANCH_PREFIX", "remotes/origin/discovery-"
 )
+# discoveryctl is downstream repo for packaging quipucordsctl
+DISCOVERY_CTL_GIT_URL = environ.get(
+    "DISCOVERY_CTL_GIT_URL",
+    "ssh://{username}@pkgs.devel.redhat.com/rpms/discoveryctl.git",
+)  # see also: https://pkgs.devel.redhat.com/cgit/rpms/discoveryctl
+QUIPUCORDS_CTL_SPEC_URL = environ.get(
+    "DISCOVERY_CTL_UPSTREAM_SPEC_URL",
+    (
+        "https://raw.githubusercontent.com/quipucords/quipucordsctl/"
+        "{0}/quipucordsctl.spec"
+    ),
+)
+DISCOVERY_CTL_GIT_REPO_PATH = environ.get(
+    "DISCOVERY_CTL_GIT_REPO_PATH", "/repos/discoveryctl"
+)
+DISCOVERY_CTL_GIT_REMOTE_RELEASE_BRANCH_DEFAULT = environ.get(
+    "DISCOVERY_CTL_GIT_REMOTE_RELEASE_BRANCH_DEFAULT",
+    "remotes/origin/discovery-2-rhel-9",
+)
+DISCOVERY_CTL_GIT_REMOTE_RELEASE_BRANCH_PREFIX = environ.get(
+    "DISCOVERY_CTL_GIT_REMOTE_RELEASE_BRANCH_PREFIX", "remotes/origin/discovery-"
+)
 
 # how noisy should I be
 SHOW_COMMANDS = environ.get("SHOW_COMMANDS", "0") == "1"
