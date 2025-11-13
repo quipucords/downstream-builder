@@ -132,7 +132,7 @@ def show_next_steps_summary(with_scratch=True, release="rhel-9", target=None):
             Create a scratch build:
 
                 cd {config.DISCOVERY_CLI_GIT_REPO_PATH}
-                rhpkg build --release {release} --target={target} --scratch
+                rhpkg --release {release} build --target={target} --scratch
             """
         )
 
