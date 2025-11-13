@@ -153,7 +153,7 @@ def build_installer():
 
 def show_next_steps_summary(with_scratch=True, release="rhel-9", target=None):
     if not target:
-        target = f"discovery-1-{release}-candidate"
+        target = f"discovery-2-{release}-candidate"
 
     release_message = dedent(
         f"""
@@ -178,7 +178,7 @@ def show_next_steps_summary(with_scratch=True, release="rhel-9", target=None):
         Update the release branch and create the release build:
 
             cd {config.DISCOVERY_INSTALLER_GIT_REPO_PATH}
-            git checkout discovery-1-{release}
+            git checkout discovery-2-{release}
             git rebase {config.PRIVATE_BRANCH_NAME}
             git push
             rhpkg build --scratch
