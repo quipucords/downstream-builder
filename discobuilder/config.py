@@ -28,7 +28,7 @@ DISCOVERY_CLI_GIT_REMOTE_RELEASE_BRANCH_DEFAULT = environ.get(
     "remotes/origin/discovery-2-rhel-9",
 )
 DISCOVERY_CLI_GIT_REMOTE_RELEASE_BRANCH_PREFIX = environ.get(
-    "DISCOVERY_CLI_GIT_REMOTE_RELEASE_BRANCH_PREFIX", "remotes/origin/discovery-"
+    "DISCOVERY_CLI_GIT_REMOTE_RELEASE_BRANCH_PREFIX", "remotes/origin/discovery-2-"
 )
 # discovery-installer is downstream repo for packaging quipucords-installer
 DISCOVERY_INSTALLER_GIT_URL = environ.get(
