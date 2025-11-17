@@ -116,7 +116,7 @@ def build_cli():
 
 def show_next_steps_summary(with_scratch=True, release="rhel-9", target=None):
     if not target:
-        target = f"discovery-1-{release}-candidate"
+        target = f"discovery-2-{release}-candidate"
 
     release_message = dedent(
         f"""
