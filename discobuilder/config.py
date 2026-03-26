@@ -30,28 +30,6 @@ DISCOVERY_CLI_GIT_REMOTE_RELEASE_BRANCH_DEFAULT = environ.get(
 DISCOVERY_CLI_GIT_REMOTE_RELEASE_BRANCH_PREFIX = environ.get(
     "DISCOVERY_CLI_GIT_REMOTE_RELEASE_BRANCH_PREFIX", "remotes/origin/discovery-2-"
 )
-# discovery-installer is downstream repo for packaging quipucords-installer
-DISCOVERY_INSTALLER_GIT_URL = environ.get(
-    "DISCOVERY_INSTALLER_GIT_URL",
-    "ssh://{username}@pkgs.devel.redhat.com/rpms/discovery-installer.git",
-)  # see also: https://pkgs.devel.redhat.com/cgit/rpms/discovery-installer
-QUIPUCORDS_INSTALLER_SPEC_URL = environ.get(
-    "DISCOVERY_INSTALLER_UPSTREAM_SPEC_URL",
-    (
-        "https://raw.githubusercontent.com/quipucords/quipucords-installer/"
-        "{0}/quipucords-installer.spec"
-    ),
-)
-DISCOVERY_INSTALLER_GIT_REPO_PATH = environ.get(
-    "DISCOVERY_INSTALLER_GIT_REPO_PATH", "/repos/discovery-installer"
-)
-DISCOVERY_INSTALLER_GIT_REMOTE_RELEASE_BRANCH_DEFAULT = environ.get(
-    "DISCOVERY_INSTALLER_GIT_REMOTE_RELEASE_BRANCH_DEFAULT",
-    "remotes/origin/discovery-2-rhel-9",
-)
-DISCOVERY_INSTALLER_GIT_REMOTE_RELEASE_BRANCH_PREFIX = environ.get(
-    "DISCOVERY_INSTALLER_GIT_REMOTE_RELEASE_BRANCH_PREFIX", "remotes/origin/discovery-"
-)
 # discoveryctl is downstream repo for packaging quipucordsctl
 DISCOVERY_CTL_GIT_URL = environ.get(
     "DISCOVERY_CTL_GIT_URL",
